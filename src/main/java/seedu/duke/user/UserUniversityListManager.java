@@ -1,5 +1,6 @@
 package seedu.duke.user;
 
+import seedu.duke.exceptions.InvalidCommentException;
 import seedu.duke.exceptions.InvalidUserCommandException;
 import seedu.duke.exceptions.TimetableNotFoundException;
 import seedu.duke.ui.Ui;
@@ -52,17 +53,15 @@ public class UserUniversityListManager {
     }
 
     public void updateComment(String universityName, String moduleCode, String comment)
-            throws InvalidUserCommandException {
+            throws InvalidUserCommandException, InvalidCommentException {
         if (!containsKey(universityName)) {
             System.out.println("Error: No list containing such university");
             System.out.println("Please create university and add relevant module before adding a comment");
         } else {
             if (checkEmpty(comment)) {
-                System.out.println("Error: Invalid Comment");
-                return;
+                throw new InvalidCommentException("Error! Invalid Comment");
             } else if (isNotValidComment(comment)) {
-                System.out.println("Error: Invalid Comment");
-                return;
+                throw new InvalidCommentException("Error! Invalid Comment");
             }
             getList(universityName).updateComment(moduleCode, comment);
         }
@@ -82,6 +81,7 @@ public class UserUniversityListManager {
 
     /**
      * Method to create a new list for PU.
+     * 
      * @param input PU name from user input
      */
     public void createList(String input) {
@@ -99,6 +99,7 @@ public class UserUniversityListManager {
 
     /**
      * Method to delete an entire university list.
+     * 
      * @param inputSchool the PU school name that we will be deleting from.
      */
     public void deleteList(String inputSchool) throws InvalidUserCommandException, TimetableNotFoundException {
@@ -124,8 +125,9 @@ public class UserUniversityListManager {
 
     /**
      * Method to delete the module based on inputs.
+     * 
      * @param inputSchool the PU to delete the module from
-     * @param puCode the exact PUCode to delete the module from
+     * @param puCode      the exact PUCode to delete the module from
      */
     public void deleteModule(String inputSchool, String puCode) throws InvalidUserCommandException {
         assert inputSchool.length() > 0 : "Input school cannot be empty";
@@ -183,7 +185,9 @@ public class UserUniversityListManager {
     }
 
     /**
-     * Method to print exactly the modules saved by user for a given university name.
+     * Method to print exactly the modules saved by user for a given university
+     * name.
+     * 
      * @param input The partner university name
      * @throws InvalidUserCommandException If input is not a valid university name
      */
@@ -195,9 +199,11 @@ public class UserUniversityListManager {
     }
 
     /**
-     * Method to print all the existing university lists that have been created by user.
+     * Method to print all the existing university lists that have been created by
+     * user.
      * For each university, method first prints the university name
-     * Method then prints all the modules user has saved for that particular university
+     * Method then prints all the modules user has saved for that particular
+     * university
      */
     public void displayAll() {
         if (myManager.isEmpty()) {
@@ -211,9 +217,9 @@ public class UserUniversityListManager {
         }
     }
 
-
     /**
      * Method to return the UserUniversityList search by user.
+     * 
      * @param input PU name
      * @return the UserUniversityList corresponding to the input PU name
      */

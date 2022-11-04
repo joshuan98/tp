@@ -226,7 +226,7 @@ public class Duke {
             }
             UserStorageParser.storeInfoToUserStorageByUni(addCommand.getUniversityName(), userUniversityListManager);
         } catch (ModuleNotFoundException | NoSuchElementException
-                 | InvalidUniversityException | UniversityNotFoundException e) {
+                 | InvalidUniversityException | UniversityNotFoundException | InvalidCommentException e) {
             Ui.printExceptionMessage(e);
         }
     }
@@ -238,14 +238,14 @@ public class Duke {
      * @throws InvalidUserCommandException if user provides invalid university name
      */
     private static void addComment(UserUniversityListManager userUniversityListManager, AddCommand addCommand)
-            throws InvalidUserCommandException {
+            throws InvalidUserCommandException, InvalidCommentException {
         if (addCommand.getValidatedComment()) {
             String universityName = addCommand.getUniversityName();
             String moduleCode = addCommand.getModuleCode();
             String comment = addCommand.getComment();
             userUniversityListManager.updateComment(universityName, moduleCode, comment);
         } else {
-            System.out.println("Error! Invalid Comment");
+            throw new InvalidCommentException("Error! Invalid Comment");
         }
     }
 
