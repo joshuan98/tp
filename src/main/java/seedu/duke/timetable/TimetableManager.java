@@ -1,12 +1,9 @@
 package seedu.duke.timetable;
 
 import seedu.duke.exceptions.InvalidUniversityException;
-import seedu.duke.exceptions.InvalidUserStorageFileException;
 import seedu.duke.exceptions.LessonNotFoundException;
 import seedu.duke.exceptions.TimetableNotFoundException;
-import seedu.duke.parser.UserStorageParser;
 import seedu.duke.ui.Ui;
-import seedu.duke.user.UserUniversityList;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -73,7 +70,7 @@ public class TimetableManager {
     public void addLesson(Lesson newLesson, boolean isLoadFromFile) throws InvalidUniversityException {
         String universityName = newLesson.getUniversity().getName();
         if (!timetableManager.containsKey(universityName)) {
-            throw new InvalidUniversityException("Error! " + universityName + " is not in your list");
+            throw new InvalidUniversityException("Error: " + universityName + " is not in your list");
         }
         timetableManager.get(universityName).addLesson(newLesson, isLoadFromFile);
     }
@@ -104,20 +101,24 @@ public class TimetableManager {
         } else {
             Timetable timetable = timetableManager.get(universityName);
             System.out.println("Timetable for " + universityName + ":");
-            Ui.printTimetable(timetable.getTimetable());
+            System.out.print(Ui.printTimetable(timetable.getTimetable()));
         }
     }
 
     /**
      * Sequentially prints all the timetables that the user has created for various universities.
      */
-    public void printAllTimetables() {
-        System.out.println("_____________________________________________________________________________");
-        for (Map.Entry<String, Timetable> set : timetableManager.entrySet()) {
-            String universityName = set.getKey();
-            Timetable timetable = timetableManager.get(universityName);
-            System.out.println("Timetable for " + universityName + ":");
-            Ui.printTimetable(timetable.getTimetable());
+    public void printAllTimetables() throws TimetableNotFoundException {
+        if (timetableManager.isEmpty()) {
+            throw new TimetableNotFoundException("No timetables saved!");
+        } else {
+            System.out.println("_____________________________________________________________________________");
+            for (Map.Entry<String, Timetable> set : timetableManager.entrySet()) {
+                String universityName = set.getKey();
+                Timetable timetable = timetableManager.get(universityName);
+                System.out.println("Timetable for " + universityName + ":");
+                System.out.print(Ui.printTimetable(timetable.getTimetable()));
+            }
         }
     }
 }

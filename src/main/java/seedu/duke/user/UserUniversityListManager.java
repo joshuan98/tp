@@ -2,12 +2,9 @@ package seedu.duke.user;
 
 import seedu.duke.exceptions.InvalidUserCommandException;
 import seedu.duke.exceptions.TimetableNotFoundException;
+import seedu.duke.exceptions.UniversityNotFoundException;
 import seedu.duke.ui.Ui;
-import seedu.duke.exceptions.InvalidUserStorageFileException;
-import seedu.duke.parser.UserStorageParser;
-import seedu.duke.userstorage.UserStorage;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -32,38 +29,54 @@ public class UserUniversityListManager {
 
     public UserUniversityListManager() {
         this.myManager = new HashMap<String, UserUniversityList>();
-        this.ttManager = UserStorageParser.getSavedTimetables();
+        this.ttManager = new TimetableManager();
     }
 
-    public UserUniversityListManager(String fileContent) throws IOException {
-        try {
-            myManager = UserStorageParser.convertFileContentIntoUniversityList(fileContent);
-            this.ttManager = UserStorageParser.getSavedTimetables();
-        } catch (InvalidUserStorageFileException e) {
-            Ui.printExceptionMessage(e);
-            System.out.println("Creating new University List Manager");
-            myManager = new HashMap<String, UserUniversityList>();
-            UserStorage.saveFile("", true);
+    private void checkTimetables() {
+
+    }
+
+    private void checkUniversityLists() {
+
+    }
+
+    private boolean checkEmpty(String comment) {
+        if (comment.length() == 0) {
+            return true;
         }
+        for (int i = 0; i < comment.length(); ++i) {
+            if (comment.charAt(i) != ' ') {
+                return false;
+            }
+        }
+        return true;
     }
 
     public void updateComment(String universityName, String moduleCode, String comment)
-            throws InvalidUserCommandException {
+            throws InvalidUserCommandException, UniversityNotFoundException {
         if (!containsKey(universityName)) {
-            System.out.println("Error: No list containing such university");
-            System.out.println("Please create university and add relevant module before adding a comment");
+            throw new UniversityNotFoundException("Error: No list containing such university\n"
+            + "Please create university and add relevant module before adding a comment");
         } else {
-            if (comment.equals("")) {
-                System.out.println("Error: No empty updates");
+            if (checkEmpty(comment)) {
+                System.out.println("Error: Invalid Comment");
+                return;
+            } else if (isNotValidComment(comment)) {
+                System.out.println("Error: Invalid Comment");
                 return;
             }
             getList(universityName).updateComment(moduleCode, comment);
         }
     }
 
-    public void deleteComment(String universityName, String moduleCode) throws InvalidUserCommandException {
+    private boolean isNotValidComment(String comment) {
+        return comment.contains("_") || comment.contains("%") || comment.contains("/") || comment.contains(";");
+    }
+
+    public void deleteComment(String universityName, String moduleCode) throws InvalidUserCommandException,
+            UniversityNotFoundException {
         if (!containsKey(universityName)) {
-            System.out.println("Error: No list containing such university");
+            throw new UniversityNotFoundException("Error: No list containing such university\n");
         } else {
             getList(universityName).deleteComment(moduleCode);
         }
@@ -178,8 +191,8 @@ public class UserUniversityListManager {
      */
     public void displayUniversity(String input) throws InvalidUserCommandException {
         assert input.length() > 0 : "Input school cannot be empty";
-        System.out.println(input);
         UserUniversityList myUniversityList = getList(input);
+        System.out.println(input);
         myUniversityList.displayModules();
     }
 
@@ -189,6 +202,9 @@ public class UserUniversityListManager {
      * Method then prints all the modules user has saved for that particular university
      */
     public void displayAll() {
+        if (myManager.isEmpty()) {
+            System.out.println("You do not have any university lists at the moment!");
+        }
         for (Map.Entry<String, UserUniversityList> set : myManager.entrySet()) {
             String universityName = set.getKey();
             UserUniversityList universityList = set.getValue();
@@ -206,7 +222,7 @@ public class UserUniversityListManager {
     public UserUniversityList getList(String input) throws InvalidUserCommandException {
         assert input.length() > 0 : "Input school cannot be empty";
         if (!myManager.containsKey(input)) {
-            throw new InvalidUserCommandException("HELP!! :: No such universities found");
+            throw new InvalidUserCommandException("Error: No university list named " + input + " is found.");
         }
         return myManager.get(input);
     }
@@ -217,10 +233,6 @@ public class UserUniversityListManager {
 
     public void setMyManager(HashMap<String, UserUniversityList> myManager) {
         this.myManager = myManager;
-    }
-
-    public UserDeletedModules getUserDeletedModules() {
-        return deletedModulesList;
     }
 
     public boolean containsKey(String inputSchool) {

@@ -3,9 +3,11 @@ package seedu.duke.parser;
 import org.junit.jupiter.api.Test;
 import seedu.duke.command.Command;
 import seedu.duke.command.CommandType;
+import seedu.duke.exceptions.InvalidCommentException;
 import seedu.duke.exceptions.InvalidModuleException;
 import seedu.duke.exceptions.InvalidUserCommandException;
 import seedu.duke.exceptions.ModuleNotFoundException;
+import seedu.duke.exceptions.UniversityNotFoundException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -63,7 +65,7 @@ public class CommandParserTest {
 
     @Test
     void getUserCommand_addCommand_returnsNormally() throws InvalidUserCommandException,
-            ModuleNotFoundException, InvalidModuleException {
+            ModuleNotFoundException, InvalidModuleException, UniversityNotFoundException, InvalidCommentException {
         String input = "/add u/UCLA m/CS3230";
 
         Command addCommand = CommandParser.getUserCommand(input);
@@ -74,7 +76,7 @@ public class CommandParserTest {
 
     @Test
     void getUserCommand_deleteCommandUniversity_returnsNormally() throws InvalidUserCommandException,
-            ModuleNotFoundException, InvalidModuleException {
+            ModuleNotFoundException, InvalidModuleException, UniversityNotFoundException, InvalidCommentException {
         String input = "/delete u/UCLA";
 
         Command deleteCommand = CommandParser.getUserCommand(input);
@@ -84,7 +86,7 @@ public class CommandParserTest {
 
     @Test
     void getUserCommand_deleteCommandModule_returnsNormally() throws InvalidUserCommandException,
-            ModuleNotFoundException, InvalidModuleException {
+            ModuleNotFoundException, InvalidModuleException, UniversityNotFoundException, InvalidCommentException {
         String input = "/delete u/UCLA m/CS3230";
 
         Command deleteCommand = CommandParser.getUserCommand(input);

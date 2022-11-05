@@ -4,6 +4,9 @@ import seedu.duke.command.Command;
 import seedu.duke.command.CreateCommand;
 import seedu.duke.command.ExitCommand;
 import seedu.duke.command.DeleteCommand;
+
+import java.util.Arrays;
+
 import seedu.duke.command.AddCommand;
 import seedu.duke.command.CommandType;
 import seedu.duke.command.FavouriteCommand;
@@ -11,11 +14,14 @@ import seedu.duke.command.HelpCommand;
 import seedu.duke.command.ListCommand;
 import seedu.duke.command.ViewCommand;
 import seedu.duke.command.Database;
+import seedu.duke.exceptions.InvalidCommentException;
 import seedu.duke.exceptions.InvalidModuleException;
 import seedu.duke.exceptions.InvalidUserCommandException;
 import seedu.duke.exceptions.ModuleNotFoundException;
+import seedu.duke.exceptions.UniversityNotFoundException;
 import seedu.duke.module.Module;
 import seedu.duke.timetable.Lesson;
+import seedu.duke.ui.Ui;
 
 /**
  * Class to handle parsing user input and creating Command after checking for validity of user input.
@@ -28,7 +34,9 @@ public class CommandParser {
     private static final String END_TIME_PREFIX = "en/";
     private static final String ADD_FAVOURITE_PREFIX = "add/";
     private static final String DELETE_FAVOURITE_PREFIX = "del/";
-    private static final String COMMENT_PREFIX = "note/";
+    private static final String COMMENT_PREFIX = "note/{";
+
+    private static final String COMMENT_DELETE_PREFIX = "note/";
     private static final String VIEW_FAVOURITE_PREFIX = "VIEW";
     private static final String UNIVERSITIES_OPTION = "UNIVERSITIES";
     private static final String USER_LISTS_OPTION = "LISTS";
@@ -50,6 +58,7 @@ public class CommandParser {
     private static final int LESSON_START_TIME_INDEX = 4;
     private static final int LESSON_END_TIME_INDEX = 5;
     private static final int COMMENT_INDEX = 3;
+    private static final int NOTE_INDEX = 5;
 
     /**
      * Creates a user command based on user input.
@@ -60,53 +69,58 @@ public class CommandParser {
      * @throws InvalidUserCommandException if the user command does not follow the command format laid out
      */
     public static Command getUserCommand(String userInput) throws InvalidUserCommandException,
-            ModuleNotFoundException, InvalidModuleException {
+            ModuleNotFoundException, InvalidModuleException, UniversityNotFoundException, InvalidCommentException {
         String[] userInputTokenized = parseUserCommand(userInput);
         if (isEmptyUserInput(userInputTokenized)) {
-            throw new InvalidUserCommandException("Error! Missing command. "
+            throw new InvalidUserCommandException("Error: Missing command. "
                     + "Please follow the command format provided");
         }
         String userInputCommand = userInputTokenized[COMMAND_INDEX];
         switch (userInputCommand) {
         case "/exit":
             if (!isValidExitCommand(userInputTokenized)) {
-                throw new InvalidUserCommandException("Error! Invalid exit command. "
+                throw new InvalidUserCommandException("Error: Invalid exit command. "
                         + "Please follow the command format provided");
             }
             ExitCommand newExitCommand = new ExitCommand(userInputTokenized, CommandType.EXIT);
             return newExitCommand;
         case "/help":
             if (!isValidHelpCommand(userInputTokenized)) {
-                throw new InvalidUserCommandException("Error! Invalid help command. "
+                throw new InvalidUserCommandException("Error: Invalid help command. "
                         + "Please follow the command format provided");
             }
             HelpCommand newHelpCommand = new HelpCommand(userInputTokenized, CommandType.HELP);
             return newHelpCommand;
         case "/create":
             if (!isValidCreateCommand(userInputTokenized)) {
-                throw new InvalidUserCommandException("Error! Invalid create command. "
+                throw new InvalidUserCommandException("Error: Invalid create command. "
                         + "Please follow the command format provided");
             }
             CreateCommand newCreateCommand = new CreateCommand(userInputTokenized, CommandType.CREATE);
             return newCreateCommand;
         case "/add":
             if (!isValidAddCommand(userInputTokenized)) {
-                throw new InvalidUserCommandException("Error! Invalid add command. "
+                throw new InvalidUserCommandException("Error: Invalid add command. "
                         + "Please follow the command format provided");
             }
+            String comment = "";
+            if (userInputTokenized.length == 4) {
+                comment = userInputTokenized[3];
+            }
             Lesson lessonToAdd = parseLesson(userInputTokenized);
-            AddCommand newAddCommand = new AddCommand(userInputTokenized, CommandType.ADD, lessonToAdd);
+            AddCommand newAddCommand = new AddCommand(userInputTokenized, CommandType.ADD, lessonToAdd, comment);
+
             return newAddCommand;
         case "/view":
             if (!isValidViewCommand(userInputTokenized)) {
-                throw new InvalidUserCommandException("Error! Invalid view command. "
+                throw new InvalidUserCommandException("Error: Invalid view command. "
                         + "Please follow the command format provided");
             }
             ViewCommand newViewCommand = new ViewCommand(userInputTokenized, CommandType.VIEW);
             return newViewCommand;
         case "/delete":
             if (!isValidDeleteCommand(userInputTokenized)) {
-                throw new InvalidUserCommandException("Error! Invalid delete command. "
+                throw new InvalidUserCommandException("Error: Invalid delete command. "
                         + "Please follow the command format provided");
             }
             boolean isDeleteModule = (userInputTokenized.length == THREE_PARAMETERS_LENGTH
@@ -117,20 +131,20 @@ public class CommandParser {
             return newDeleteCommand;
         case "/list":
             if (!isValidListCommand(userInputTokenized)) {
-                throw new InvalidUserCommandException("Error! Invalid list command. "
+                throw new InvalidUserCommandException("Error: Invalid list command. "
                         + "Please follow the command format provided");
             }
             ListCommand newListCommand = new ListCommand(userInputTokenized, CommandType.LIST);
             return newListCommand;
         case "/favourite":
             if (!isValidFavouriteCommand(userInputTokenized)) {
-                throw new InvalidUserCommandException("Error! Invalid favourite command. "
+                throw new InvalidUserCommandException("Error: Invalid favourite command. "
                         + "Please follow the command format provided");
             }
             FavouriteCommand newFavouriteCommand = new FavouriteCommand(userInputTokenized, CommandType.FAVOURITE);
             return newFavouriteCommand;
         default:
-            throw new InvalidUserCommandException("Error! Unidentified command. "
+            throw new InvalidUserCommandException("Error: Unidentified command. "
                     + "Please follow the command format provided");
         }
     }
@@ -144,12 +158,14 @@ public class CommandParser {
      * @throws ModuleNotFoundException if user input module code is not found in database
      * @throws InvalidModuleException if module details are invalid when passed into Lesson constructor
      */
-    private static Lesson parseLesson(String[] parameters) throws ModuleNotFoundException, InvalidModuleException {
+    private static Lesson parseLesson(String[] parameters) throws ModuleNotFoundException, InvalidModuleException,
+            UniversityNotFoundException {
         if (!isValidCommandOnTimetable(parameters)) {
             return null;
         } else {
             String code = parameters[MODULE_INDEX].substring(2);
             String universityName = parameters[UNIVERSITY_INDEX].substring(2);
+
             Module puModule = Database.findPuMapping(code, universityName).getPartnerUniversityModule();
             String day = parameters[DAY_INDEX].substring(2);
             String startTime = parameters[LESSON_START_TIME_INDEX].substring(3);
@@ -157,7 +173,6 @@ public class CommandParser {
             return new Lesson(puModule.getCode(), puModule.getTitle(), puModule.getCredit(), puModule.getUniversity(),
                     day, startTime, endTime);
         }
-
     }
 
     /**
@@ -330,14 +345,15 @@ public class CommandParser {
         return parameters.length == FOUR_PARAMETERS_LENGTH
                 && parameters[UNIVERSITY_INDEX].startsWith(UNIVERSITY_PREFIX)
                 && parameters[MODULE_INDEX].startsWith(MODULE_PREFIX)
-                && parameters[COMMENT_INDEX].startsWith(COMMENT_PREFIX);
+                && parameters[COMMENT_INDEX].startsWith(COMMENT_PREFIX)
+                && parameters[COMMENT_INDEX].charAt(parameters[COMMENT_INDEX].length() - 1) == '}';
     }
 
     private static boolean isValidDeleteCommandOnModules(String [] parameters) {
         return parameters.length == FOUR_PARAMETERS_LENGTH
                 && parameters[UNIVERSITY_INDEX].startsWith(UNIVERSITY_PREFIX)
                 && parameters[MODULE_INDEX].startsWith(MODULE_PREFIX)
-                && parameters[COMMENT_INDEX].startsWith(COMMENT_PREFIX);
+                && parameters[COMMENT_INDEX].startsWith(COMMENT_DELETE_PREFIX);
     }
 
     /**
@@ -347,11 +363,31 @@ public class CommandParser {
      * @return An array of user input parameters split by spaces with underscores removed.
      */
     private static String[] parseUserCommand(String userInput) {
+        if (userInput.contains("note/{") && userInput.charAt(userInput.length() - 1) == '}') {
+            return parseUserCommandWithComments(userInput);
+        }
+        return parseUserCommandWithoutComments(userInput);
+    }
+
+    private static String[] parseUserCommandWithoutComments(String userInput) {
         String[] userInputTokenized = userInput.split(" +");
         for (int i = 0; i < userInputTokenized.length; i++) {
             userInputTokenized[i] = removeParameterUnderscores(userInputTokenized[i]);
         }
         return userInputTokenized;
+    }
+
+    private static String[] parseUserCommandWithComments(String userInput) {
+        int index =  getParametersBeforeComment(userInput);
+        String before = userInput.substring(0, index);
+        String after = userInput.substring(index);
+        String[] userInputTokenized = before.split(" +");
+        for (int i = 0; i < userInputTokenized.length; i++) {
+            userInputTokenized[i] = removeParameterUnderscores(userInputTokenized[i]);
+        }
+        String [] allTokens = Arrays.copyOf(userInputTokenized, userInputTokenized.length + 1);
+        allTokens[userInputTokenized.length] = after;
+        return allTokens;
     }
 
     /**
@@ -361,7 +397,21 @@ public class CommandParser {
      * @return User input with underscores removed.
      */
     private static String removeParameterUnderscores(String parameter) {
+        if (parameter.startsWith("_") || parameter.endsWith("_")) {
+            return "ERROR";
+        }
         return parameter.replace("_", " ");
     }
 
+    private static int getParametersBeforeComment(String parameter) {
+        int start = 0;
+        String temp = "";
+        for (int i = 0; i < parameter.length() - 6; ++i) {
+            temp = parameter.substring(i, i +   6);
+            if (temp.equals("note/{")) {
+                start = i;
+            }
+        }
+        return start;
+    }
 }

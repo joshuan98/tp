@@ -24,6 +24,12 @@ public class Ui {
             + "                  __/ |                     \n"
             + "                 |___/                      \n";
 
+    private static final String GOODBYE = " ___               _  _             \n"
+            + "/  _>  ___  ___  _| || |_  _ _  ___ \n"
+            + "| <_/\\/ . \\/ . \\/ . || . \\| | |/ ._>\n"
+            + "`____/\\___/\\___/\\___||___/`_. |\\___.\n"
+            + "                          <___'     \n";
+
     private static final String SPACING = "     ";
 
     /**
@@ -54,7 +60,8 @@ public class Ui {
      */
     public static String sayByeToUser() {
         String goodbyeMessage = LINE
-                + "Goodbye. Hope to see you again soon!\n"
+                + GOODBYE
+                + "Hope to see you again soon!\n"
                 + LINE;
         return goodbyeMessage;
     }
@@ -74,8 +81,10 @@ public class Ui {
                 + SPACING + "add       " + "/add u/{UNIVERSITY_NAME} m/{MODULE_CODE}              "
                 + "Adds a lesson for the input module code to the timetable for the input\n"
                 + SPACING + "          " + "d/{DAY_OF_THE_WEEK} st/{START_TIME} en/{END_TIME}\n"
+                + SPACING + "add       " + "/add u/{UNIVERSITY_NAME} m/{MODULE_CODE} note/{input} "
+                + "Adds input comment to the corresponding module code & university\n"
                 + SPACING + "          " + "                                                    \n"
-                + SPACING + "create    " + "/create u/UNIVERSITY_NAME_IN_UNDERSCORES              "
+                + SPACING + "create    " + "/create u/UNIVERSITY_NAME                             "
                 + "Creates an empty module list for the input university\n"
                 + SPACING + "          " + "                                                    \n"
                 + SPACING + "delete    " + "/delete u/{UNIVERSITY_NAME}                           "
@@ -85,6 +94,8 @@ public class Ui {
                 + SPACING + "delete    " + "/delete u/{UNIVERSITY_NAME} m/{MODULE_CODE}           "
                 + "Deletes input lesson from the university's timetable\n"
                 + SPACING + "          " + "d/{DAY_OF_THE_WEEK} st/{START_TIME} en/{END_TIME}\n"
+                + SPACING + "delete    " + "/delete u/{UNIVERSITY_NAME} m/{MODULE_CODE} note/     "
+                + "Deletes the comment from input university & module code if any\n"
                 + SPACING + "          " + "                                                    \n"
                 + SPACING + "exit      " + "/exit                                                 "
                 + "Terminates the program\n"
@@ -312,15 +323,19 @@ public class Ui {
     public static void printUserFavouriteLists(HashMap<String, UserUniversityList> userFavouriteLists) {
         assert userFavouriteLists.size() > 0 : "Dictionary of university name to favourite lists should not be empty";
         System.out.print(LINE);
-        System.out.println("Your favourite lists are:");
-        int i = 1;
-        for (Map.Entry<String, UserUniversityList> set : userFavouriteLists.entrySet()) {
-            String universityName = set.getKey();
-            UserUniversityList universityList = set.getValue();
-            if (universityList.isFavourite()) {
-                System.out.println(i + ". " + universityName);
-                universityList.displayModules();
-                i++;
+        if (userFavouriteLists.entrySet().isEmpty()) {
+            System.out.println("You do not have any favourite lists yet!");
+        } else {
+            System.out.println("Your favourite lists are:");
+            int i = 1;
+            for (Map.Entry<String, UserUniversityList> set : userFavouriteLists.entrySet()) {
+                String universityName = set.getKey();
+                UserUniversityList universityList = set.getValue();
+                if (universityList.isFavourite()) {
+                    System.out.println(i + ". " + universityName);
+                    universityList.displayModules();
+                    i++;
+                }
             }
         }
     }
@@ -445,29 +460,30 @@ public class Ui {
      *
      * @param timetable The dictionary containing the lists of lessons to be printed, indexed by weekday.
      */
-    public static void printTimetable(HashMap<String, ArrayList<Lesson>> timetable) {
-        System.out.print(LINE);
+    public static String printTimetable(HashMap<String, ArrayList<Lesson>> timetable) {
+        String message = LINE;
+        message += "Monday:\n";
         ArrayList<Lesson> mondayLessonList = timetable.get("monday");
+        message += Ui.printLessonsByDayInTimetable(mondayLessonList);
+        message += "Tuesday:\n";
         ArrayList<Lesson> tuesdayLessonList = timetable.get("tuesday");
+        message += Ui.printLessonsByDayInTimetable(tuesdayLessonList);
+        message += "Wednesday:\n";
         ArrayList<Lesson> wednesdayLessonList = timetable.get("wednesday");
+        message += Ui.printLessonsByDayInTimetable(wednesdayLessonList);
+        message += "Thursday:\n";
         ArrayList<Lesson> thursdayLessonList = timetable.get("thursday");
+        message += Ui.printLessonsByDayInTimetable(thursdayLessonList);
+        message += "Friday:\n";
         ArrayList<Lesson> fridayLessonList = timetable.get("friday");
+        message += Ui.printLessonsByDayInTimetable(fridayLessonList);
+        message += "Saturday:\n";
         ArrayList<Lesson> saturdayLessonList = timetable.get("saturday");
+        message += Ui.printLessonsByDayInTimetable(saturdayLessonList);
+        message += "Sunday:\n";
         ArrayList<Lesson> sundayLessonList = timetable.get("sunday");
-        System.out.println("Monday:");
-        System.out.print(Ui.printLessonsByDayInTimetable(mondayLessonList));
-        System.out.println("Tuesday:");
-        System.out.print(Ui.printLessonsByDayInTimetable(tuesdayLessonList));
-        System.out.println("Wednesday:");
-        System.out.print(Ui.printLessonsByDayInTimetable(wednesdayLessonList));
-        System.out.println("Thursday:");
-        System.out.print(Ui.printLessonsByDayInTimetable(thursdayLessonList));
-        System.out.println("Friday:");
-        System.out.print(Ui.printLessonsByDayInTimetable(fridayLessonList));
-        System.out.println("Saturday:");
-        System.out.print(Ui.printLessonsByDayInTimetable(saturdayLessonList));
-        System.out.println("Sunday:");
-        System.out.print(Ui.printLessonsByDayInTimetable(sundayLessonList));
-        System.out.print(LINE);
+        message += Ui.printLessonsByDayInTimetable(sundayLessonList);
+        message += LINE;
+        return message;
     }
 }
